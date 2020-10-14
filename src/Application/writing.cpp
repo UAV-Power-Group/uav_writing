@@ -60,7 +60,7 @@ int main(int argc, char **argv)
     nh.param<float>("size_square", size_square, 1.5);
     nh.param<float>("height_square", height_square, 1.0);
     nh.param<float>("height_d", height_d, 0.5);
-    nh.param<float>("sleep_time", sleep_time, 5.0);
+    nh.param<float>("sleep_time", sleep_time, 3.0);
 
 
 
@@ -710,6 +710,31 @@ int main(int argc, char **argv)
         i++;
 
     }
+
+       //第26个目标点，回到起点
+    i = 0;
+    while (i < sleep_time)
+    {
+
+        Command_now.command = Move_ENU;  //Move模式
+        Command_now.sub_mode = 0;             //子模式：位置控制模式
+        Command_now.pos_sp[0] = 3*0;
+        Command_now.pos_sp[1] = 0;
+        Command_now.pos_sp[2] = height_square;
+        Command_now.yaw_sp = 0;
+        Command_now.comid = comid;
+        comid++;
+
+        move_pub.publish(Command_now);
+
+        rate.sleep();
+
+        cout << "Point 26"<<endl;
+
+        i++;
+
+    }
+
 
     //降落
 

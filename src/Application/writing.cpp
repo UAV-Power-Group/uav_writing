@@ -40,9 +40,8 @@ enum Command
     Failsafe_land,
 };
 px4_command::command Command_now;
-//---------------------------------------正方形参数---------------------------------------------
-float size_square;                  //正方形边长
-float height_square;                //飞行高度
+//---------------------------------------飞行参数---------------------------------------------
+float height;                //飞行高度
 float height_d;                            //高度差
 float sleep_time;
 int main(int argc, char **argv)
@@ -50,15 +49,14 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "writing");
     ros::NodeHandle nh("~");
 
-    // 频率 [1hz]
-    ros::Rate rate(1.0);
+    // 频率 [50hz]
+    ros::Rate rate(50.0);
 
     // 【发布】发送给position_control.cpp的命令
     ros::Publisher move_pub = nh.advertise<px4_command::command>("/px4/command", 10);
 
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>参数读取<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    nh.param<float>("size_square", size_square, 1.5);
-    nh.param<float>("height_square", height_square, 1.0);
+    nh.param<float>("height", height, 1.0);
     nh.param<float>("height_d", height_d, 0.5);
     nh.param<float>("sleep_time", sleep_time, 3.0);
 
@@ -67,8 +65,7 @@ int main(int argc, char **argv)
     int check_flag;
     // 这一步是为了程序运行前检查一下参数是否正确
     // 输入1,继续，其他，退出程序
-    cout << "size_square: "<<size_square<<"[m]"<<endl;
-    cout << "height_square: "<<height_square<<"[m]"<<endl;
+    cout << "height: "<<height<<"[m]"<<endl;
     cout << "height_d: "<<height_d<<"[m]"<<endl;
     cout << "Please check the parameter and setting，1 for go on， else for quit: "<<endl;
     cin >> check_flag;
@@ -81,6 +78,7 @@ int main(int argc, char **argv)
 
     int i = 0;
     int comid = 0;
+    int point_id = 0;
 
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>主程序<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //takeoff
@@ -92,7 +90,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 0;
         Command_now.pos_sp[1] = 0;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -105,9 +103,10 @@ int main(int argc, char **argv)
 
     }
 
-    //依次发送4个目标点给position_control.cpp
+    //依次发送汉字目标点给position_control.cpp
     //第一个目标点，左上角
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -115,7 +114,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = -3*0.1;
         Command_now.pos_sp[1] = 7*0.1;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -124,7 +123,7 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 1"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
@@ -134,6 +133,7 @@ int main(int argc, char **argv)
 
     //第二个目标点，右上角
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -141,7 +141,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = -3*0.1;
         Command_now.pos_sp[1] = 5*0.1;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -150,15 +150,16 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 2"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
 
-        //第三个目标点，右上角升高度
+    //第三个目标点，右上角升高度
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -166,7 +167,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = -5*0.1;
         Command_now.pos_sp[1] = 4*0.1;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -175,7 +176,7 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 3"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
@@ -183,6 +184,7 @@ int main(int argc, char **argv)
 
     //第四个目标点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -190,7 +192,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = -1*0.1;
         Command_now.pos_sp[1] = 4*0.1;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -199,7 +201,7 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 4"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
@@ -208,6 +210,7 @@ int main(int argc, char **argv)
 
     //第五个目标点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -215,7 +218,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = -5*0.1;
         Command_now.pos_sp[1] = 0;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -224,7 +227,7 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 5"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
@@ -232,6 +235,7 @@ int main(int argc, char **argv)
 
     //第六个目标点，右下角
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -239,7 +243,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = -3*0.1;
         Command_now.pos_sp[1] = 2*0.1;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -248,7 +252,7 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 6"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
@@ -256,6 +260,7 @@ int main(int argc, char **argv)
 
     //第七个目标点，回到起点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -263,7 +268,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = -3*0.1;
         Command_now.pos_sp[1] = -6*0.1;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -272,14 +277,15 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 7"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
-        //第8个目标点，回到起点
+    //第8个目标点，回到起点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -287,7 +293,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = -3*0.1;
         Command_now.pos_sp[1] = 2*0.1;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -296,14 +302,15 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 8"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
-        //第9个目标点，回到起点
+    //第9个目标点，回到起点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -311,7 +318,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = -1*0.1;
         Command_now.pos_sp[1] = 0;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -320,15 +327,41 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 9"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
 
-        //第10个目标点，回到起点
+    //第10个目标点，回到起点
     i = 0;
+    point_id++;
+    while (i < sleep_time)
+    {
+
+        Command_now.command = Move_ENU;  //Move模式
+        Command_now.sub_mode = 0;             //子模式：位置控制模式
+        Command_now.pos_sp[0] = -1*0.1;
+        Command_now.pos_sp[1] = 0;
+        Command_now.pos_sp[2] = height+height_d;   //左半部分完成升高
+        Command_now.yaw_sp = 0;
+        Command_now.comid = comid;
+        comid++;
+
+        move_pub.publish(Command_now);
+
+        rate.sleep();
+
+        cout << "Point "<< point_id << endl;
+
+        i++;
+
+    }
+
+    //第11个目标点，回到起点
+    i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -336,7 +369,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 1*0.1;
         Command_now.pos_sp[1] = 0.7;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -345,14 +378,15 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 10"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
-        //第11个目标点，回到起点
+    //第12个目标点，回到起点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -360,7 +394,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 5*0.1;
         Command_now.pos_sp[1] = 0.7;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -369,14 +403,40 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 11"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
-        //第12个目标点，回到起点
+    //第13个目标点，回到起点
     i = 0;
+    point_id++;
+    while (i < sleep_time)
+    {
+
+        Command_now.command = Move_ENU;  //Move模式
+        Command_now.sub_mode = 0;             //子模式：位置控制模式
+        Command_now.pos_sp[0] = 5*0.1;
+        Command_now.pos_sp[1] = 0.7;
+        Command_now.pos_sp[2] = height+height_d;
+        Command_now.yaw_sp = 0;
+        Command_now.comid = comid;
+        comid++;
+
+        move_pub.publish(Command_now);
+
+        rate.sleep();
+
+        cout << "Point "<< point_id << endl;
+
+        i++;
+
+    }
+
+    //第14个目标点，回到起点
+    i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -384,7 +444,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 1*0.1;
         Command_now.pos_sp[1] = 0.5;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -393,15 +453,16 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 12"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
 
-        //第13个目标点，回到起点
+    //第15个目标点，回到起点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -409,7 +470,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 1*0.1;
         Command_now.pos_sp[1] = 0.1;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -418,13 +479,14 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 13"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
-        //第14个目标点，回到起点
+    //第16个目标点，回到起点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -432,7 +494,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 5*0.1;
         Command_now.pos_sp[1] = 0.1;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -441,14 +503,15 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 14"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
-        //第15个目标点，回到起点
+    //第17个目标点，回到起点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -456,7 +519,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 5*0.1;
         Command_now.pos_sp[1] = 0.5;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -465,14 +528,15 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 15"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
-        //第16个目标点，回到起点
+    //第18个目标点，回到起点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -480,7 +544,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 1*0.1;
         Command_now.pos_sp[1] = 0.5;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -489,14 +553,40 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 16"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
-        //第17个目标点，回到起点
+    //第19个目标点，回到起点
     i = 0;
+    point_id++;
+    while (i < sleep_time)
+    {
+
+        Command_now.command = Move_ENU;  //Move模式
+        Command_now.sub_mode = 0;             //子模式：位置控制模式
+        Command_now.pos_sp[0] = 1*0.1;
+        Command_now.pos_sp[1] = 0.5;
+        Command_now.pos_sp[2] = height+height_d;
+        Command_now.yaw_sp = 0;
+        Command_now.comid = comid;
+        comid++;
+
+        move_pub.publish(Command_now);
+
+        rate.sleep();
+
+        cout << "Point "<< point_id << endl;
+
+        i++;
+
+    }
+
+    //第20个目标点，回到起点
+    i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -504,7 +594,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 0;
         Command_now.pos_sp[1] = 0;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -513,14 +603,15 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 17"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
-        //第18个目标点，回到起点
+    //第21个目标点，回到起点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -528,7 +619,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 0;
         Command_now.pos_sp[1] = -0.6;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -537,14 +628,15 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 18"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
-        //第19个目标点，回到起点
+    //第22个目标点，回到起点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -552,7 +644,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 6*0.1;
         Command_now.pos_sp[1] = -0.6;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -561,14 +653,15 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 19"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
-        //第20个目标点，回到起点
+    //第23个目标点，回到起点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -576,7 +669,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 6*0.1;
         Command_now.pos_sp[1] = 0;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -585,14 +678,15 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 20"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
-        //第21个目标点，回到起点
+    //第24个目标点，回到起点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -600,7 +694,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 0;
         Command_now.pos_sp[1] = 0;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -609,14 +703,15 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 21"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
-        //第22个目标点，回到起点
+    //第25个目标点，回到起点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -624,7 +719,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 0;
         Command_now.pos_sp[1] = -0.3;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -633,14 +728,15 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 22"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
-        //第23个目标点，回到起点
+    //第26个目标点，回到起点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -648,7 +744,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 6*0.1;
         Command_now.pos_sp[1] = -0.3;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -657,14 +753,40 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 23"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
-        //第24个目标点，回到起点
+    //第27个目标点，回到起点
     i = 0;
+    point_id++;
+    while (i < sleep_time)
+    {
+
+        Command_now.command = Move_ENU;  //Move模式
+        Command_now.sub_mode = 0;             //子模式：位置控制模式
+        Command_now.pos_sp[0] = 6*0.1;
+        Command_now.pos_sp[1] = -0.3;
+        Command_now.pos_sp[2] = height+height_d;
+        Command_now.yaw_sp = 0;
+        Command_now.comid = comid;
+        comid++;
+
+        move_pub.publish(Command_now);
+
+        rate.sleep();
+
+        cout << "Point "<< point_id << endl;
+
+        i++;
+
+    }
+
+    //第28个目标点，回到起点
+    i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -672,7 +794,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 3*0.1;
         Command_now.pos_sp[1] = 0;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -681,14 +803,15 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 24"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
-        //第25个目标点，回到起点
+    //第29个目标点，回到起点
     i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -696,7 +819,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 3*0.1;
         Command_now.pos_sp[1] = -0.6;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -705,14 +828,40 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 25"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 
     }
 
-       //第26个目标点，回到起点
+    //第30个目标点，回到起点
     i = 0;
+    point_id++;
+    while (i < sleep_time)
+    {
+
+        Command_now.command = Move_ENU;  //Move模式
+        Command_now.sub_mode = 0;             //子模式：位置控制模式
+        Command_now.pos_sp[0] = 3*0.1;
+        Command_now.pos_sp[1] = -0.6;
+        Command_now.pos_sp[2] = height+height_d;
+        Command_now.yaw_sp = 0;
+        Command_now.comid = comid;
+        comid++;
+
+        move_pub.publish(Command_now);
+
+        rate.sleep();
+
+        cout << "Point "<< point_id << endl;
+
+        i++;
+
+    }
+
+    //第30个目标点，回到起点
+    i = 0;
+    point_id++;
     while (i < sleep_time)
     {
 
@@ -720,7 +869,7 @@ int main(int argc, char **argv)
         Command_now.sub_mode = 0;             //子模式：位置控制模式
         Command_now.pos_sp[0] = 3*0;
         Command_now.pos_sp[1] = 0;
-        Command_now.pos_sp[2] = height_square;
+        Command_now.pos_sp[2] = height+height_d;
         Command_now.yaw_sp = 0;
         Command_now.comid = comid;
         comid++;
@@ -729,7 +878,7 @@ int main(int argc, char **argv)
 
         rate.sleep();
 
-        cout << "Point 26"<<endl;
+        cout << "Point "<< point_id << endl;
 
         i++;
 

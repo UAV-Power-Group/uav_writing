@@ -49,8 +49,8 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "writing");
     ros::NodeHandle nh("~");
 
-    // 频率 [50hz]
-    ros::Rate rate(50.0);
+    // 频率 [1hz]
+    ros::Rate rate(1.0);
 
     // 【发布】发送给position_control.cpp的命令
     ros::Publisher move_pub = nh.advertise<px4_command::command>("/px4/command", 10);

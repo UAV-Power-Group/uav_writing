@@ -5,7 +5,7 @@
  *
  * Update Time: 2020.8.11
  *
- * 说明: mavros写字 写“王”
+ * 说明: UAV写字 写“福”
  *      1.
  *      2.
  *      3.
@@ -49,8 +49,9 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "writing");
     ros::NodeHandle nh("~");
 
-    // 频率 [50hz]
-    ros::Rate rate(50.0);
+    // 频率 [10hz]
+    ros::Rate rate(10.0);
+    ros::Rate rate_second(1.0);
 
     // 【发布】发送给position_control.cpp的命令
     ros::Publisher move_pub = nh.advertise<px4_command::command>("/px4/command", 10);
@@ -78,11 +79,20 @@ int main(int argc, char **argv)
 
     int i = 0;
     int comid = 0;
-    int point_id = 0;
+    int stroke_id = 0;       // 笔画的ID
+    int point_id = 0;       // 目标点的ID
+    int point_step = 20;   // 每个笔画采样点数
+
+    int sum_stroke = 29;   // 所需要飞行轨迹总数， 数组长度-1
+    float Fu[30][3] = {{-0.3, 0.7, height}, {-0.3, 0.5, height}, {-0.5, 0.4, height}, {-0.1, 0.4, height}, {-0.5, 0.0, height}, 
+                       {-0.3, 0.2, height}, {-0.3, -0.6, height}, {-0.3, 0.2, height}, {0.0, -0.1, height}, {0.0, -0.1, height+height_d},
+                       {0.1, 0.7, height}, {0.5, 0.7, height}, {0.5, 0.7, height+height_d}, {0.1, 0.5, height}, {0.1, 0.1, height}, 
+                       {0.5, 0.1, height}, {0.5, 0.5, height}, {0.1, 0.5, height}, {0.1, 0.5, height+height_d}, {0.0, 0.0, height},
+                       {0.0, -0.6, height}, {0.6, -0.6, height}, {0.6, 0.0, height}, {0.0, 0.0, height}, {0.0, -0.3, height}, 
+                       {0.6, -0.3, height}, {0.6, -0.3, height+height_d}, {0.3, 0.0, height}, {0.3, -0.6, height}, {0.3, -0.6, height+height_d}};    // 福字各笔画的起点终点
 
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>主程序<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     //takeoff
-    i = 0;
     while (i < sleep_time)
     {
 
@@ -97,802 +107,66 @@ int main(int argc, char **argv)
 
         move_pub.publish(Command_now);
 
-        rate.sleep();
+        rate_second.sleep();
 
+        i++;
+
+    }
+
+    // 飞到写字的起点
+    i = 0;
+    while (i < sleep_time)
+    {
+
+        Command_now.command = Move_ENU;       //Move模式
+        Command_now.sub_mode = 0;             //子模式：位置控制模式
+        Command_now.pos_sp[0] = Fu[0][0];
+        Command_now.pos_sp[1] = Fu[0][1];
+        Command_now.pos_sp[2] = Fu[0][2];
+        Command_now.yaw_sp = 0;
+        Command_now.comid = comid;
+        comid++;
+
+        move_pub.publish(Command_now);
+
+        rate_second.sleep();
         i++;
 
     }
 
     //依次发送汉字目标点给position_control.cpp
-    //第一个目标点，左上角
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
+    while (stroke_id < sum_stroke)
     {
+        stroke_id++;
+        while (point_id <= point_step)
+        {
 
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = -3*0.1;
-        Command_now.pos_sp[1] = 7*0.1;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
+            Command_now.command = Move_ENU;  //Move模式
+            Command_now.sub_mode = 0;             //子模式：位置控制模式
+            Command_now.pos_sp[0] = Fu[stroke_id-1][0]+point_id*(Fu[stroke_id][0]-Fu[stroke_id-1][0])/point_step;
+            Command_now.pos_sp[1] = Fu[stroke_id-1][1]+point_id*(Fu[stroke_id][1]-Fu[stroke_id-1][1])/point_step;
+            Command_now.pos_sp[2] = Fu[stroke_id-1][2]+point_id*(Fu[stroke_id][2]-Fu[stroke_id-1][2])/point_step;
+            Command_now.yaw_sp = 0;
+            Command_now.comid = comid;
+            comid++;
 
-        move_pub.publish(Command_now);
+            move_pub.publish(Command_now);
 
-        rate.sleep();
+            rate.sleep();
 
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
+            cout << "stroke" << stroke_id << "  Point "<< point_id << endl;
+            point_id++;
+        }
+        point_id = 0;
     }
 
-
-
-    //第二个目标点，右上角
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = -3*0.1;
-        Command_now.pos_sp[1] = 5*0.1;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-
-    //第三个目标点，右上角升高度
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = -5*0.1;
-        Command_now.pos_sp[1] = 4*0.1;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第四个目标点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = -1*0.1;
-        Command_now.pos_sp[1] = 4*0.1;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-
-    //第五个目标点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = -5*0.1;
-        Command_now.pos_sp[1] = 0;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第六个目标点，右下角
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = -3*0.1;
-        Command_now.pos_sp[1] = 2*0.1;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第七个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = -3*0.1;
-        Command_now.pos_sp[1] = -6*0.1;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第8个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = -3*0.1;
-        Command_now.pos_sp[1] = 2*0.1;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第9个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = -1*0.1;
-        Command_now.pos_sp[1] = 0;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-
-    //第10个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = -1*0.1;
-        Command_now.pos_sp[1] = 0;
-        Command_now.pos_sp[2] = height+height_d;   //左半部分完成升高
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第11个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 1*0.1;
-        Command_now.pos_sp[1] = 0.7;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第12个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 5*0.1;
-        Command_now.pos_sp[1] = 0.7;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第13个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 5*0.1;
-        Command_now.pos_sp[1] = 0.7;
-        Command_now.pos_sp[2] = height+height_d;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第14个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 1*0.1;
-        Command_now.pos_sp[1] = 0.5;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-
-    //第15个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 1*0.1;
-        Command_now.pos_sp[1] = 0.1;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-    //第16个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 5*0.1;
-        Command_now.pos_sp[1] = 0.1;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第17个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 5*0.1;
-        Command_now.pos_sp[1] = 0.5;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第18个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 1*0.1;
-        Command_now.pos_sp[1] = 0.5;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第19个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 1*0.1;
-        Command_now.pos_sp[1] = 0.5;
-        Command_now.pos_sp[2] = height+height_d;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第20个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 0;
-        Command_now.pos_sp[1] = 0;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第21个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 0;
-        Command_now.pos_sp[1] = -0.6;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第22个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 6*0.1;
-        Command_now.pos_sp[1] = -0.6;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第23个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 6*0.1;
-        Command_now.pos_sp[1] = 0;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第24个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 0;
-        Command_now.pos_sp[1] = 0;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第25个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 0;
-        Command_now.pos_sp[1] = -0.3;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第26个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 6*0.1;
-        Command_now.pos_sp[1] = -0.3;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第27个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 6*0.1;
-        Command_now.pos_sp[1] = -0.3;
-        Command_now.pos_sp[2] = height+height_d;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第28个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 3*0.1;
-        Command_now.pos_sp[1] = 0;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第29个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 3*0.1;
-        Command_now.pos_sp[1] = -0.6;
-        Command_now.pos_sp[2] = height;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第30个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 3*0.1;
-        Command_now.pos_sp[1] = -0.6;
-        Command_now.pos_sp[2] = height+height_d;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-    //第30个目标点，回到起点
-    i = 0;
-    point_id++;
-    while (i < sleep_time)
-    {
-
-        Command_now.command = Move_ENU;  //Move模式
-        Command_now.sub_mode = 0;             //子模式：位置控制模式
-        Command_now.pos_sp[0] = 3*0;
-        Command_now.pos_sp[1] = 0;
-        Command_now.pos_sp[2] = height+height_d;
-        Command_now.yaw_sp = 0;
-        Command_now.comid = comid;
-        comid++;
-
-        move_pub.publish(Command_now);
-
-        rate.sleep();
-
-        cout << "Point "<< point_id << endl;
-
-        i++;
-
-    }
-
-
+ 
     //降落
-
-
 
     Command_now.command = Land;
     move_pub.publish(Command_now);
 
-    rate.sleep();
+    rate_second.sleep();
 
     cout << "Land"<<endl;
 
